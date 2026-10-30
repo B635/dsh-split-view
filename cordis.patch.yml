@@ -1,0 +1,3 @@
+- insert:
+    - id: session-split
+      name: '@local/dsh-session-split'

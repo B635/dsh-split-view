@@ -1,0 +1,13 @@
+# Build/installation artifacts — never commit these
+*.tgz
+*.tar.gz
+
+# Local package managers / OS
+node_modules/
+.DS_Store
+Thumbs.db
+
+# Editor / tooling
+.vscode/
+.idea/
+*.log

@@ -1,0 +1,53 @@
+{
+  "name": "@local/dsh-session-split",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Show two sessions side by side in the DSH Web main area.",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-session",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/B635/dsh-split-view.git"
+  },
+  "homepage": "https://github.com/B635/dsh-split-view#readme",
+  "bugs": {
+    "url": "https://github.com/B635/dsh-split-view/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "split-view",
+    "session",
+    "web-ui"
+  ]
+}

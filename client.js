@@ -113,7 +113,7 @@ window.__ModuleLoader__.load({
     // ------------------------------------------------------------------- styles
     const CSS = `
 .dss-page{display:flex;flex-direction:column;min-width:0;min-height:0;height:100%;background:var(--dsw-alias-bg-base);position:relative}
-.dss-topbar{display:flex;align-items:center;gap:8px;flex:none;height:48px;padding:0 12px 0 20px;border-bottom:.5px solid var(--dsw-alias-border-l1);min-width:0}
+.dss-topbar{display:flex;align-items:center;gap:8px;flex:none;height:48px;padding:0 12px 0 max(20px, var(--dsh-frame-leading-clearance, 20px));border-bottom:.5px solid var(--dsw-alias-border-l1);min-width:0}
 .dss-title{display:flex;align-items:center;gap:8px;min-width:0;color:var(--dsw-alias-label-primary);font-size:13px;font-weight:500;line-height:20px}
 .dss-title-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dss-spacer{flex:1;min-width:8px}
@@ -1231,7 +1231,7 @@ window.__ModuleLoader__.load({
               {
                 name: "sidebar.panellist",
                 id: PANEL_ID,
-                order: 103,
+                order: 104,
                 label: () => t("panel.title"),
               },
               SplitPanelIcon,

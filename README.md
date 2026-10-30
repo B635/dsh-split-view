@@ -15,7 +15,7 @@ A client plugin for the DSH Web UI that shows **two sessions side by side**, eac
 
 - 每栏顶部是可点击的会话名胶囊：点开列表可切换会话（显示标题、工作区、运行状态；列表不含子 Agent 会话与已归档会话）。
 - 中间分隔条可拖动调整左右宽度（20%–80%）：鼠标拖拽即可；**双击**分隔条复位 50%；聚焦分隔条后也可用 ←/→（Shift 加速）、Home/End 调整。比例与左右会话都会记住（`localStorage: dsh.session-split.v1`）。
-- 分栏页的**顶部栏**是窗口拖拽区（macOS 桌面端），按住顶部栏空白处可拖动整个应用窗口。
+- 分栏页的**顶部栏**是窗口拖拽区（macOS 桌面端），按住顶部栏空白处可拖动整个应用窗口；窗口变窄、左侧栏收起时，顶部栏会自动让出 macOS 红绿灯/展开按钮的位置（读宿主 `--dsh-frame-leading-clearance`）。
 - 右上角：交换左右、关闭分栏（回到普通会话视图）；每栏还有一个「在主会话中打开」按钮。
 - 两栏会自动避免选中同一个会话（同一会话不支持两套同时可编辑的输入框）。
 - **智能体团队（Agent Teams）**：如果你的会话带 Team（有 Lead/teammate 或共享任务），每栏头部会出现一个「团队」胶囊（成员数）。点开可看到成员列表与共享任务板；点成员会**在当前这一栏内切到该成员的会话**（仍然是分栏，不会跳到单页面），点 Lead 成员切回 Lead；想全屏打开某个会话可用栏头的「在主会话中打开」。
@@ -47,7 +47,7 @@ plugin_manager install_bundle target=git+https://github.com/B635/dsh-split-view.
 
 **方式三：离线 tgz**
 
-从本仓库的 **Releases** 下载 `local-dsh-session-split-<version>.tgz`，拷到目标电脑后，Add plugin 里填 tgz 的绝对路径安装（例如 macOS `/Users/me/Downloads/local-dsh-session-split-1.2.1.tgz`、Windows `C:\Users\me\Downloads\local-dsh-session-split-1.2.1.tgz`）。
+从本仓库的 **Releases** 下载 `local-dsh-session-split-<version>.tgz`，拷到目标电脑后，Add plugin 里填 tgz 的绝对路径安装（例如 macOS `/Users/me/Downloads/local-dsh-session-split-1.2.2.tgz`、Windows `C:\Users\me\Downloads\local-dsh-session-split-1.2.2.tgz`）。
 
 **更新 / 卸载**
 

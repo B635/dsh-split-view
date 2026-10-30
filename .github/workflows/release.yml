@@ -41,7 +41,9 @@ jobs:
           fi
 
       - name: Pack the plugin bundle
-        run: npm pack --pack-destination ./dist
+        run: |
+          mkdir -p dist
+          npm pack --pack-destination ./dist
 
       - name: Create or update the release
         env:

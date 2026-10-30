@@ -1,6 +1,6 @@
 {
   "name": "@local/dsh-session-split",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "type": "module",
   "description": "Show two sessions side by side in the DSH Web main area.",

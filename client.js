@@ -38,6 +38,7 @@ window.__ModuleLoader__.load({
       "session.untitled": "未命名会话",
       "action.swap": "交换左右",
       "action.close": "关闭分栏",
+      "action.resize": "拖动调整宽度",
       "action.openInMain": "在主会话中打开",
       "action.change": "切换会话",
       "action.left": "左侧会话",
@@ -78,6 +79,7 @@ window.__ModuleLoader__.load({
       "session.untitled": "Untitled session",
       "action.swap": "Swap panes",
       "action.close": "Close split view",
+      "action.resize": "Drag to resize",
       "action.openInMain": "Open in main conversation",
       "action.change": "Change session",
       "action.left": "Left session",
@@ -136,11 +138,15 @@ window.__ModuleLoader__.load({
 .dss-pane-cwd{color:var(--dsw-alias-label-secondary);font-size:11px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
 .dss-pane-actions{display:flex;align-items:center;gap:2px;flex:none}
 .dss-pane-body{flex:1;min-height:0;min-width:0;display:flex;flex-direction:column;position:relative;overflow:hidden}
-.dss-divider{flex:none;width:7px;margin:0 -3px;position:relative;z-index:6;cursor:col-resize;touch-action:none;background:transparent}
-.dss-divider::before{content:"";position:absolute;top:0;bottom:0;left:3px;width:1px;background:var(--dsw-alias-border-l1)}
-.dss-divider:hover::before,.dss-divider[data-dragging="true"]::before{background:var(--dsw-alias-brand-primary);width:2px;left:2.5px}
+.dss-divider{flex:none;width:11px;margin:0 -5px;position:relative;z-index:6;cursor:col-resize;touch-action:none;background:transparent;user-select:none;-webkit-user-select:none}
+.dss-divider::before{content:"";position:absolute;top:0;bottom:0;left:5px;width:1px;background:var(--dsw-alias-border-l1)}
+.dss-divider::after{content:"";position:absolute;top:50%;left:3.5px;width:4px;height:28px;margin-top:-14px;border-radius:2px;background:transparent}
+.dss-divider:hover::before,.dss-page[data-resizing="true"] .dss-divider::before{background:var(--dsw-alias-brand-primary);width:2px;left:4.5px}
+.dss-divider:hover::after,.dss-page[data-resizing="true"] .dss-divider::after{background:var(--dsw-alias-brand-primary);opacity:.45}
 .dss-divider:focus-visible{outline:none}
-.dss-divider:focus-visible::before{background:var(--dsw-alias-brand-primary);width:2px;left:2.5px}
+.dss-divider:focus-visible::before{background:var(--dsw-alias-brand-primary);width:2px;left:4.5px}
+.dss-page[data-resizing="true"]{cursor:col-resize}
+.dss-page[data-resizing="true"] *{cursor:col-resize !important;user-select:none !important;-webkit-user-select:none !important}
 .dss-picker{position:absolute;top:calc(100% + 4px);left:8px;z-index:40;width:360px;max-width:calc(100% - 16px);max-height:min(420px,60vh);overflow:auto;box-sizing:border-box;padding:4px;border:.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-lg);background:var(--dsw-alias-bg-overlay);box-shadow:var(--dsw-elevation-prominent)}
 .dss-picker-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px 8px;color:var(--dsw-alias-label-secondary);font-size:11px;line-height:16px}
 .dss-picker-row{box-sizing:border-box;display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:6px 8px;border:none;border-radius:var(--dsw-radius-md);background:transparent;color:var(--dsw-alias-label-primary);cursor:pointer;text-align:left}
@@ -984,41 +990,78 @@ window.__ModuleLoader__.load({
         }
       }, [controller]);
 
-      const onDividerPointerDown = useCallback((event) => {
-        if (event.button !== 0) return;
+      const applyRatioToDom = useCallback((ratio) => {
         const panes = panesRef.current;
         if (panes === null) return;
-        const rect = panes.getBoundingClientRect();
-        if (rect.width <= 0) return;
+        const left = panes.children[0];
+        const right = panes.children[2];
+        if (left !== undefined) left.style.flexGrow = String(ratio);
+        if (right !== undefined) right.style.flexGrow = String(1 - ratio);
+      }, []);
+
+      /**
+       * Drag the pane divider. Uses document-level listeners so the drag keeps
+       * working even while the pointer leaves the thin handle.
+       */
+      const onDividerPointerDown = useCallback(
+        (event) => {
+          if (event.button !== 0) return;
+          const panes = panesRef.current;
+          if (panes === null) return;
+          const rect = panes.getBoundingClientRect();
+          if (rect.width <= 0) return;
+          event.preventDefault();
+          const pointerId = event.pointerId;
+          const startX = event.clientX;
+          const startRatio = getSplitState().ratio;
+          const width = rect.width;
+          let ratio = startRatio;
+          let moved = false;
+          const cleanup = () => {
+            window.removeEventListener("pointermove", onMove, true);
+            window.removeEventListener("pointerup", onUp, true);
+            window.removeEventListener("pointercancel", onUp, true);
+            if (panes.isConnected) delete panes.dataset.resizing;
+            setResizing(false);
+          };
+          const onMove = (moveEvent) => {
+            if (moveEvent.pointerId !== pointerId) return;
+            const next = Math.min(MAX_RATIO, Math.max(MIN_RATIO, startRatio + (moveEvent.clientX - startX) / width));
+            if (next === ratio) return;
+            ratio = next;
+            moved = true;
+            applyRatioToDom(ratio);
+          };
+          const onUp = (upEvent) => {
+            if (upEvent !== undefined && upEvent.pointerId !== pointerId) return;
+            cleanup();
+            if (moved) setSplitState({ ratio });
+          };
+          panes.dataset.resizing = "true";
+          setResizing(true);
+          window.addEventListener("pointermove", onMove, true);
+          window.addEventListener("pointerup", onUp, true);
+          window.addEventListener("pointercancel", onUp, true);
+        },
+        [applyRatioToDom],
+      );
+
+      const onDividerDoubleClick = useCallback(() => {
+        setSplitState({ ratio: DEFAULT_RATIO });
+      }, []);
+
+      const onDividerKeyDown = useCallback((event) => {
+        const current = getSplitState().ratio;
+        const step = event.shiftKey ? 0.1 : 0.02;
+        let next = null;
+        if (event.key === "ArrowLeft") next = Math.max(MIN_RATIO, current - step);
+        else if (event.key === "ArrowRight") next = Math.min(MAX_RATIO, current + step);
+        else if (event.key === "Home") next = MIN_RATIO;
+        else if (event.key === "End") next = MAX_RATIO;
+        else if (event.key === "Enter" || event.key === " ") next = DEFAULT_RATIO;
+        if (next === null) return;
         event.preventDefault();
-        event.currentTarget.setPointerCapture(event.pointerId);
-        resizeRef.current = { pointerId: event.pointerId, startX: event.clientX, startRatio: getSplitState().ratio, width: rect.width };
-        panes.dataset.resizing = "true";
-        setResizing(true);
-      }, []);
-
-      const onDividerPointerMove = useCallback((event) => {
-        const drag = resizeRef.current;
-        if (drag === null || drag.pointerId !== event.pointerId) return;
-        const ratio = Math.min(MAX_RATIO, Math.max(MIN_RATIO, drag.startRatio + (event.clientX - drag.startX) / drag.width));
-        drag.ratio = ratio;
-        const panes = panesRef.current;
-        if (panes !== null) {
-          const left = panes.children[0];
-          const right = panes.children[2];
-          if (left !== undefined) left.style.flexGrow = String(ratio);
-          if (right !== undefined) right.style.flexGrow = String(1 - ratio);
-        }
-      }, []);
-
-      const finishResize = useCallback((event) => {
-        const drag = resizeRef.current;
-        if (drag === null || (event !== undefined && drag.pointerId !== event.pointerId)) return;
-        resizeRef.current = null;
-        const panes = panesRef.current;
-        if (panes !== null) delete panes.dataset.resizing;
-        setResizing(false);
-        if (typeof drag.ratio === "number") setSplitState({ ratio: drag.ratio });
+        setSplitState({ ratio: next });
       }, []);
 
       const paneProps = {
@@ -1036,7 +1079,7 @@ window.__ModuleLoader__.load({
         { className: "dss-page", "data-session-split": "", "data-resizing": resizing ? "true" : undefined },
         h(
           "div",
-          { className: "dss-topbar" },
+          { className: "dss-topbar", "data-window-drag": true },
           h("div", { className: "dss-title" }, h(SplitGlyph, { size: 16 }), h("span", { className: "dss-title-text" }, t("panel.title"))),
           h("div", { className: "dss-spacer" }),
           h(
@@ -1055,12 +1098,14 @@ window.__ModuleLoader__.load({
             role: "separator",
             tabIndex: 0,
             "aria-orientation": "vertical",
-            "aria-label": t("panel.title"),
+            "aria-label": t("action.resize"),
+            "aria-valuenow": Math.round(split.ratio * 100),
+            "aria-valuemin": Math.round(MIN_RATIO * 100),
+            "aria-valuemax": Math.round(MAX_RATIO * 100),
+            title: t("action.resize"),
             onPointerDown: onDividerPointerDown,
-            onPointerMove: onDividerPointerMove,
-            onPointerUp: finishResize,
-            onPointerCancel: finishResize,
-            onLostPointerCapture: finishResize,
+            onDoubleClick: onDividerDoubleClick,
+            onKeyDown: onDividerKeyDown,
           }),
           h(PaneColumn, { ...paneProps, side: "right", target: rightTarget, otherTarget: leftTarget, ratio: 1 - split.ratio }),
         ),
@@ -1186,7 +1231,7 @@ window.__ModuleLoader__.load({
               {
                 name: "sidebar.panellist",
                 id: PANEL_ID,
-                order: 102,
+                order: 103,
                 label: () => t("panel.title"),
               },
               SplitPanelIcon,

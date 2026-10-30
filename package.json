@@ -17,8 +17,7 @@
     "locale/*.json",
     "icon.svg",
     "README.md",
-    "LICENSE",
-    ".github/workflows/release.yml"
+    "LICENSE"
   ],
   "dsh": {
     "bundle": {
